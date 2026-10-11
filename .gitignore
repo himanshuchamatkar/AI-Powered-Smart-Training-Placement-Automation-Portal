@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production build
+dist/
+build/
+
+# Environment and secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+credentials.txt
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Personal files and PDFs
+himanshu Chamatkar_CSE_01Jun26.pdf
+*.pdf
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
