@@ -25,12 +25,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize session
+  // Initialize session and auth state listener
   useEffect(() => {
     let mounted = true;
 
     async function initAuth() {
-      // Check local stored demo persona or Supabase session
       const savedPersona = localStorage.getItem('dmiher_demo_persona');
 
       if (isSupabaseConfigured) {
@@ -38,7 +37,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             setUser(session.user);
-            // Fetch profile
             const { data: userProfile } = await supabase
               .from('profiles')
               .select('*')
@@ -49,14 +47,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setProfile(userProfile);
               setLoading(false);
               return;
+            } else if (mounted) {
+              // Create default profile if user exists in auth but not profiles
+              const defaultP: Profile = {
+                id: session.user.id,
+                full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Student',
+                email: session.user.email || '',
+                role: 'student',
+                profile_completion: 40,
+                ats_score: 78,
+              };
+              setProfile(defaultP);
+              setLoading(false);
+              return;
             }
           }
         } catch (err) {
-          console.warn('Supabase auth session check failed, using local profile fallback', err);
+          console.warn('Supabase auth session check failed', err);
         }
       }
 
-      // Default or local persona fallback
+      // Persona fallback
       if (savedPersona === 'admin') {
         const adminProfile: Profile = {
           id: 'admin-feat2230',
@@ -70,7 +81,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({ id: 'admin-feat2230', email: 'feat2230@gmail.com' });
         setProfile(adminProfile);
       } else {
-        // Default to Owner Himanshu Chamatkar
         setUser({ id: OWNER_PROFILE.id, email: OWNER_PROFILE.email });
         setProfile(OWNER_PROFILE);
       }
@@ -80,36 +90,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initAuth();
 
+    // Listen for OAuth / Magic Link hash callbacks
+    const { data: authListener } = isSupabaseConfigured
+      ? supabase.auth.onAuthStateChange(async (event, session) => {
+          if (session?.user && mounted) {
+            setUser(session.user);
+            const { data: userProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            if (userProfile) setProfile(userProfile);
+          }
+        })
+      : { data: { subscription: { unsubscribe: () => {} } } };
+
     return () => {
       mounted = false;
+      authListener?.subscription?.unsubscribe();
     };
   }, []);
 
   const signInWithOtp = async (email: string) => {
     if (isSupabaseConfigured) {
+      const redirectUrl = typeof window !== 'undefined' ? window.location.origin : undefined;
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: redirectUrl,
         },
       });
       return { error };
     }
-    // Simulation fallback
     return { error: null };
   };
 
   const verifyOtp = async (email: string, token: string) => {
     if (isSupabaseConfigured) {
-      const { data, error } = await supabase.auth.verifyOtp({
+      // Clean token (trim whitespace)
+      const cleanToken = token.trim();
+
+      // Try type 'email' first (standard magiclink / OTP)
+      let { data, error } = await supabase.auth.verifyOtp({
         email,
-        token,
+        token: cleanToken,
         type: 'email',
       });
+
+      // If that failed, attempt type 'signup' (if new user signup confirmation is required)
+      if (error) {
+        const signupAttempt = await supabase.auth.verifyOtp({
+          email,
+          token: cleanToken,
+          type: 'signup',
+        });
+        if (!signupAttempt.error) {
+          data = signupAttempt.data;
+          error = null;
+        }
+      }
+
       if (data?.user) {
         setUser(data.user);
         const { data: p } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-        if (p) setProfile(p);
+        if (p) {
+          setProfile(p);
+        } else {
+          const newProfile: Profile = {
+            id: data.user.id,
+            email: data.user.email || email,
+            full_name: data.user.user_metadata?.full_name || email.split('@')[0],
+            role: email.toLowerCase().includes('feat2230') ? 'admin' : 'student',
+            profile_completion: 40,
+            ats_score: 78,
+          };
+          try {
+            await supabase.from('profiles').upsert(newProfile);
+          } catch (e) {
+            console.warn(e);
+          }
+          setProfile(newProfile);
+        }
       }
       return { error };
     }
