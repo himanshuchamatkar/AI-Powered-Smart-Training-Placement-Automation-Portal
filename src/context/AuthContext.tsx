@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Profile, UserRole } from '@/types/database';
 import { OWNER_PROFILE } from '@/data/ownerProfile';
+import { getScoreForUser } from '@/lib/scoring/ats';
 
 interface AuthContextType {
   user: any | null;
@@ -44,7 +45,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .single();
 
             if (userProfile && mounted) {
-              setProfile(userProfile);
+              const calibratedProfile = {
+                ...userProfile,
+                ats_score: getScoreForUser(userProfile),
+              };
+              setProfile(calibratedProfile);
               setLoading(false);
               return;
             } else if (mounted) {
@@ -55,7 +60,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: session.user.email || '',
                 role: 'student',
                 profile_completion: 40,
-                ats_score: 78,
+                ats_score: getScoreForUser({
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Student',
+                } as Profile),
               };
               setProfile(defaultP);
               setLoading(false);
@@ -155,15 +164,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.user);
         const { data: p } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
         if (p) {
-          setProfile(p);
+          const calibratedProfile = {
+            ...p,
+            ats_score: getScoreForUser(p),
+          };
+          setProfile(calibratedProfile);
         } else {
-          const newProfile: Profile = {
+          const targetUser: Profile = {
             id: data.user.id,
             email: data.user.email || email,
             full_name: data.user.user_metadata?.full_name || email.split('@')[0],
             role: email.toLowerCase().includes('feat2230') ? 'admin' : 'student',
             profile_completion: 40,
-            ats_score: 78,
+          };
+          const newProfile: Profile = {
+            ...targetUser,
+            ats_score: getScoreForUser(targetUser),
           };
           try {
             await supabase.from('profiles').upsert(newProfile);

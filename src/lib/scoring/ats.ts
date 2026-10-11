@@ -37,17 +37,35 @@ export const ROLE_KEYWORD_BENCHMARKS: RoleKeywordMap = {
 };
 
 /**
- * Deterministic hash calculation for non-owner profiles to maintain a stable score between 75 and 82.
+ * Calibrated ATS score:
+ * - Himanshu Chamatkar (Owner): exactly 78% (institutional baseline).
+ * - Other students: varied/randomized deterministically between 72% and 86% based on profile hash, ensuring other users do not default to 78.
  */
-function getDeterministicScore(str: string): number {
+export function getScoreForUser(profile?: Profile | null): number {
+  if (!profile) return 81;
+
+  const isOwner =
+    profile.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile.id === 'owner-himanshu-chamatkar' ||
+    profile.full_name?.toLowerCase().includes('himanshu');
+
+  if (isOwner) return 78;
+
+  const key = `${profile.id || ''}:${profile.email || ''}:${profile.full_name || 'student'}`;
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash << 5) - hash + key.charCodeAt(i);
     hash |= 0;
   }
-  // Map hash deterministically to range [75, 82]
-  return 75 + (Math.abs(hash) % 8);
+  // Map hash deterministically between 72 and 86
+  let score = 72 + (Math.abs(hash) % 15);
+  // Guarantee other users do not collide with 78
+  if (score === 78) {
+    score = 83;
+  }
+  return score;
 }
+
 
 export function calculateATSAnalysis(
   profile: Profile,
@@ -88,9 +106,7 @@ export function calculateATSAnalysis(
     }
   });
 
-  const score = isOwner
-    ? 78
-    : getDeterministicScore(profile.id || profile.email || 'student-default');
+  const score = getScoreForUser(profile);
 
   const suggestions: ATSAnalysis['suggestions'] = [
     {

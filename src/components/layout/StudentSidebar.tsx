@@ -12,9 +12,11 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { getScoreForUser } from '@/lib/scoring/ats';
 
 export const StudentSidebar: React.FC = () => {
   const { profile } = useAuth();
+  const atsScore = getScoreForUser(profile || ({} as any));
 
   const links = [
     { to: '/student/dashboard', icon: LayoutDashboard, label: 'Overview Dashboard' },
@@ -46,12 +48,12 @@ export const StudentSidebar: React.FC = () => {
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             ATS Readiness
           </span>
-          <span className="text-amber-400 font-bold">{profile?.ats_score || 78}%</span>
+          <span className="text-amber-400 font-bold">{atsScore}%</span>
         </div>
         <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
           <div
             className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500"
-            style={{ width: `${profile?.ats_score || 78}%` }}
+            style={{ width: `${atsScore}%` }}
           />
         </div>
         <div className="mt-2 text-[11px] text-slate-400 flex justify-between">

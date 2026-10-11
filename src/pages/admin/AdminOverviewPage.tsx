@@ -18,6 +18,7 @@ import {
   SEED_APPLICATIONS,
   SEED_RECRUITMENT_DRIVES,
 } from '@/data/mockSeed';
+import { getScoreForUser } from '@/lib/scoring/ats';
 import {
   BarChart,
   Bar,
@@ -37,7 +38,7 @@ export const AdminOverviewPage: React.FC = () => {
   const totalApplications = SEED_APPLICATIONS.length;
   const placedStudents = 18; // Documented synthetic placement count
   const averageATS = Math.round(
-    SEED_SYNTHETIC_STUDENTS.reduce((acc, s) => acc + (s.ats_score || 78), 0) / totalStudents
+    SEED_SYNTHETIC_STUDENTS.reduce((acc, s) => acc + (s.ats_score || getScoreForUser(s)), 0) / totalStudents
   );
   const upcomingDrives = SEED_RECRUITMENT_DRIVES.length;
 

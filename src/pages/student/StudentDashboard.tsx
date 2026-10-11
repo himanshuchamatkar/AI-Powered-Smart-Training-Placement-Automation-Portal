@@ -20,9 +20,11 @@ import {
 import { SEED_JOBS, SEED_APPLICATIONS, SEED_RECRUITMENT_DRIVES, SEED_ANNOUNCEMENTS } from '@/data/mockSeed';
 import { OWNER_SKILLS } from '@/data/ownerProfile';
 import { rankJobsForStudent } from '@/lib/scoring/matching';
+import { getScoreForUser } from '@/lib/scoring/ats';
 
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
+  const atsScore = getScoreForUser(profile || ({} as any));
   const userSkillNames = OWNER_SKILLS.map((s) => s.name);
 
   // Top ranked jobs for this student
@@ -30,7 +32,10 @@ export const StudentDashboard: React.FC = () => {
   const topJobs = rankedJobs.slice(0, 3);
 
   // Student applications
-  const myApplications = SEED_APPLICATIONS.filter((a) => a.student_id === profile?.id);
+  const myApplications = (() => {
+    const apps = SEED_APPLICATIONS.filter((a) => a.student_id === profile?.id);
+    return apps.length > 0 ? apps : SEED_APPLICATIONS;
+  })();
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen">
@@ -91,7 +96,7 @@ export const StudentDashboard: React.FC = () => {
                   />
                   <path
                     className="text-amber-400"
-                    strokeDasharray={`${profile?.ats_score || 78}, 100`}
+                    strokeDasharray={`${atsScore}, 100`}
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     stroke="currentColor"
@@ -101,7 +106,7 @@ export const StudentDashboard: React.FC = () => {
                 </svg>
                 <div className="absolute text-center">
                   <span className="text-lg font-bold text-white leading-none">
-                    {profile?.ats_score || 78}%
+                    {atsScore}%
                   </span>
                   <div className="text-[9px] text-slate-400 uppercase font-semibold">Score</div>
                 </div>

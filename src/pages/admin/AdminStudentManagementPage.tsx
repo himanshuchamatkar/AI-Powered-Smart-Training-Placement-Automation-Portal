@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { SEED_SYNTHETIC_STUDENTS } from '@/data/mockSeed';
 import { Profile } from '@/types/database';
+import { getScoreForUser } from '@/lib/scoring/ats';
 
 export const AdminStudentManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -132,7 +133,7 @@ export const AdminStudentManagementPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-bold text-amber-400">{stud.ats_score || 78}%</span>
+                      <span className="font-bold text-amber-400">{stud.ats_score || getScoreForUser(stud)}%</span>
                     </td>
                     <td className="py-3.5 px-4 text-slate-300">{stud.preferred_domain || 'AI/ML'}</td>
                     <td className="py-3.5 px-4 text-right">
@@ -176,7 +177,7 @@ export const AdminStudentManagementPage: React.FC = () => {
                 </div>
                 <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
                   <span className="text-slate-400 text-[11px]">ATS Readiness Score</span>
-                  <div className="text-base font-bold text-amber-400">{activeStudent.ats_score}%</div>
+                  <div className="text-base font-bold text-amber-400">{activeStudent.ats_score || getScoreForUser(activeStudent)}%</div>
                 </div>
               </div>
 
