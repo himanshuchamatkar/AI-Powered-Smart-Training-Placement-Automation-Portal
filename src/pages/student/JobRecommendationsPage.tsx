@@ -17,7 +17,7 @@ import {
   Sparkles,
   Info,
 } from 'lucide-react';
-import { SEED_JOBS, SEED_COMPANIES } from '@/data/mockSeed';
+import { SEED_JOBS, SEED_COMPANIES, SEED_APPLICATIONS } from '@/data/mockSeed';
 import { OWNER_SKILLS } from '@/data/ownerProfile';
 import { rankJobsForStudent, evaluateJobMatch } from '@/lib/scoring/matching';
 import { Job } from '@/types/database';
@@ -50,6 +50,29 @@ export const JobRecommendationsPage: React.FC = () => {
   });
 
   const handleTrackApplication = (job: Job) => {
+    try {
+      const storageKey = `dmiher_applications_${profile?.id || 'default'}`;
+      const saved = localStorage.getItem(storageKey);
+      let list = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(list) || list.length === 0) {
+        list = [...SEED_APPLICATIONS];
+      }
+      const existing = list.find((a: any) => a.job_id === job.id);
+      if (!existing) {
+        const newApp = {
+          id: `app-${Date.now().toString().slice(-6)}`,
+          student_id: profile?.id || 'demo-student',
+          job_id: job.id,
+          status: 'prepared',
+          applied_at: new Date().toISOString(),
+          student_notes: `Tracked from Recommended Jobs for ${job.title}.`,
+        };
+        list.unshift(newApp);
+        localStorage.setItem(storageKey, JSON.stringify(list));
+      }
+    } catch (e) {
+      console.warn('Failed to save tracked application', e);
+    }
     setTrackMessage(`Application for "${job.title}" saved to your Application Tracker with status "Prepared".`);
     setTimeout(() => setTrackMessage(null), 4000);
   };

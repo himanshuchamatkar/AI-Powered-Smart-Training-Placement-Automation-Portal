@@ -42,6 +42,20 @@ export const AdminApplicationManagementPage: React.FC = () => {
     setSelectedApp(null);
   };
 
+  const handleInlineStatusChange = (appId: string, status: ApplicationStatus) => {
+    setApplications((prev) =>
+      prev.map((app) =>
+        app.id === appId
+          ? {
+              ...app,
+              status,
+              updated_at: new Date().toISOString(),
+            }
+          : app
+      )
+    );
+  };
+
   const getStatusBadge = (status: ApplicationStatus) => {
     switch (status) {
       case 'selected':
@@ -100,13 +114,22 @@ export const AdminApplicationManagementPage: React.FC = () => {
                       <td className="py-3.5 px-4 text-slate-200">{job?.title || 'Engineer'}</td>
                       <td className="py-3.5 px-4 text-emerald-400 font-semibold">{company?.name}</td>
                       <td className="py-3.5 px-4">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase ${getStatusBadge(
-                            app.status
-                          )}`}
+                        <select
+                          value={app.status}
+                          onChange={(e) =>
+                            handleInlineStatusChange(app.id, e.target.value as ApplicationStatus)
+                          }
+                          className="bg-slate-750 hover:bg-slate-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl border border-slate-600 focus:border-brand-500 outline-none cursor-pointer capitalize"
                         >
-                          {app.status}
-                        </span>
+                          <option value="draft" className="bg-slate-800 text-slate-200">Draft</option>
+                          <option value="prepared" className="bg-slate-800 text-slate-200">Prepared</option>
+                          <option value="applied" className="bg-slate-800 text-amber-300">Applied</option>
+                          <option value="shortlisted" className="bg-slate-800 text-blue-300">Shortlisted</option>
+                          <option value="interview" className="bg-slate-800 text-purple-300">Interview</option>
+                          <option value="selected" className="bg-slate-800 text-emerald-300">Selected 🏆</option>
+                          <option value="rejected" className="bg-slate-800 text-rose-300">Rejected</option>
+                          <option value="withdrawn" className="bg-slate-800 text-slate-400">Withdrawn</option>
+                        </select>
                       </td>
                       <td className="py-3.5 px-4 text-slate-300">
                         {app.interview_at ? (
