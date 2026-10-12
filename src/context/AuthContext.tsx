@@ -12,7 +12,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isStudent: boolean;
   signInWithOtp: (email: string) => Promise<{ error: any | null }>;
-  verifyOtp: (email: string, token: string) => Promise<{ error: any | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: any | null; isNewUser?: boolean }>;
   signOut: () => Promise<void>;
   updateProfile: (updated: Partial<Profile>) => Promise<void>;
   // Dev helper to switch role or demo persona safely
@@ -59,12 +59,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Student',
                 email: session.user.email || '',
                 role: 'student',
-                profile_completion: 40,
-                ats_score: getScoreForUser({
-                  id: session.user.id,
-                  email: session.user.email || '',
-                  full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Student',
-                } as Profile),
+                profile_completion: 0,
+                ats_score: 0,
               };
               setProfile(defaultP);
               setLoading(false);
@@ -163,23 +159,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data?.user) {
         setUser(data.user);
         const { data: p } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+        let isNewUser = false;
         if (p) {
           const calibratedProfile = {
             ...p,
             ats_score: getScoreForUser(p),
           };
           setProfile(calibratedProfile);
+          isNewUser = !p.profile_completion || p.profile_completion < 50;
         } else {
-          const targetUser: Profile = {
+          isNewUser = true;
+          const newProfile: Profile = {
             id: data.user.id,
             email: data.user.email || email,
             full_name: data.user.user_metadata?.full_name || email.split('@')[0],
             role: email.toLowerCase().includes('feat2230') ? 'admin' : 'student',
-            profile_completion: 40,
-          };
-          const newProfile: Profile = {
-            ...targetUser,
-            ats_score: getScoreForUser(targetUser),
+            profile_completion: 0,
+            ats_score: 0,
           };
           try {
             await supabase.from('profiles').upsert(newProfile);
@@ -188,8 +184,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           setProfile(newProfile);
         }
+        return { error, isNewUser };
       }
-      return { error };
+      return { error, isNewUser: false };
     }
 
     // Dev verification

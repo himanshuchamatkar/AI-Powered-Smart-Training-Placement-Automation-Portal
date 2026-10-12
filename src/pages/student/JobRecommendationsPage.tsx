@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -16,6 +16,7 @@ import {
   Clock,
   Sparkles,
   Info,
+  AlertCircle,
 } from 'lucide-react';
 import { SEED_JOBS, SEED_COMPANIES, SEED_APPLICATIONS } from '@/data/mockSeed';
 import { OWNER_SKILLS } from '@/data/ownerProfile';
@@ -26,7 +27,28 @@ export const JobRecommendationsPage: React.FC = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
 
-  const userSkillNames = OWNER_SKILLS.map((s) => s.name);
+  const isOwner =
+    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar' ||
+    profile?.full_name?.toLowerCase().includes('himanshu');
+
+  const userSkillNames = useMemo(() => {
+    if (isOwner) return OWNER_SKILLS.map((s) => s.name);
+    try {
+      const saved = localStorage.getItem(`dmiher_student_profile_${profile?.id || 'default'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed.skills) && parsed.skills.length > 0) {
+          return parsed.skills.map((s: any) => s.name || s);
+        }
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+    return [];
+  }, [profile?.id, isOwner]);
+
+  const isProfileIncomplete = !isOwner && (!profile?.profile_completion || profile.profile_completion < 50);
   const rankedAll = rankJobsForStudent(profile || ({} as any), userSkillNames, SEED_JOBS);
 
   // Filters
@@ -89,6 +111,27 @@ export const JobRecommendationsPage: React.FC = () => {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-6">
+        {/* Incomplete Profile Setup Banner */}
+        {isProfileIncomplete && (
+          <div className="p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-start gap-3.5">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-bold text-amber-950">Action Required: Profile Setup Incomplete</h4>
+                <p className="text-xs text-amber-800 mt-0.5 max-w-2xl leading-relaxed">
+                  As a newly registered student, add your skills, academic scores, and projects in the Profile Builder to receive personalized, accurate job matches tailored to your profile.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/student/profile?first_time=true"
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 inline-flex items-center gap-1.5 transition-colors"
+            >
+              Complete Profile Setup &rarr;
+            </Link>
+          </div>
+        )}
+
         {/* Track Feedback Notice */}
         {trackMessage && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-medium flex items-center justify-between">

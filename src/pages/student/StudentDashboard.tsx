@@ -27,8 +27,26 @@ import { Application, ApplicationStatus } from '@/types/database';
 
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
+  const isOwner =
+    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar' ||
+    profile?.full_name?.toLowerCase().includes('himanshu');
   const atsScore = getScoreForUser(profile || ({} as any));
-  const userSkillNames = OWNER_SKILLS.map((s) => s.name);
+  const userSkillNames = React.useMemo(() => {
+    if (isOwner) return OWNER_SKILLS.map((s) => s.name);
+    try {
+      const saved = localStorage.getItem(`dmiher_student_profile_${profile?.id || 'default'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed.skills) && parsed.skills.length > 0) {
+          return parsed.skills.map((s: any) => s.name || s);
+        }
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+    return [];
+  }, [profile?.id, isOwner]);
 
   // Top ranked jobs for this student
   const rankedJobs = rankJobsForStudent(profile || ({} as any), userSkillNames, SEED_JOBS);
@@ -116,6 +134,27 @@ export const StudentDashboard: React.FC = () => {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+        {/* Incomplete Profile Setup Banner for First-Time Users */}
+        {(!profile?.profile_completion || profile.profile_completion < 50) && (
+          <div className="p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-start gap-3.5">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-bold text-amber-950">Action Required: Complete Your Academic Profile</h4>
+                <p className="text-xs text-amber-800 mt-0.5 max-w-2xl leading-relaxed">
+                  Your profile is currently incomplete ({profile?.profile_completion || 0}%). Please enter your academic credentials, technical skills, and projects in the Profile Builder to calculate your personalized ATS score and unlock campus recruitment drives.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/student/profile?first_time=true"
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 inline-flex items-center gap-1.5 transition-colors"
+            >
+              Complete Profile Setup &rarr;
+            </Link>
+          </div>
+        )}
+
         {/* Top Profile Summary Strip */}
         <div className="bg-gradient-to-r from-slate-900 via-navy-800 to-brand-950 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
           <div className="absolute right-0 top-0 bottom-0 w-96 bg-brand-500/10 blur-3xl pointer-events-none" />
@@ -130,25 +169,25 @@ export const StudentDashboard: React.FC = () => {
                 {profile?.full_name}
               </h2>
               <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                {profile?.career_objective || 'AI/ML & Automation Engineer'}
+                {profile?.career_objective || (isOwner ? 'AI/ML & Automation Engineer' : 'Configure your career objective in Profile Builder')}
               </p>
 
               <div className="flex flex-wrap gap-4 mt-4 text-xs font-medium text-slate-300">
                 <div>
                   <span className="text-slate-400">CGPA:</span>{' '}
-                  <span className="text-white font-bold">{profile?.cgpa || '6.29'}</span>
+                  <span className="text-white font-bold">{profile?.cgpa ? profile.cgpa : (isOwner ? '6.29' : 'Not set')}</span>
                 </div>
                 <div>&bull;</div>
                 <div>
                   <span className="text-slate-400">Readiness Level:</span>{' '}
                   <span className="text-emerald-400 font-semibold capitalize">
-                    {profile?.experience_level || 'Intermediate'}
+                    {profile?.experience_level || (isOwner ? 'Intermediate' : 'Beginner')}
                   </span>
                 </div>
                 <div>&bull;</div>
                 <div>
                   <span className="text-slate-400">Profile Completion:</span>{' '}
-                  <span className="text-brand-300 font-semibold">{profile?.profile_completion || 96}%</span>
+                  <span className="text-brand-300 font-semibold">{profile?.profile_completion ?? (isOwner ? 96 : 0)}%</span>
                 </div>
               </div>
             </div>
@@ -164,37 +203,38 @@ export const StudentDashboard: React.FC = () => {
                     fill="none"
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
-                  <path
-                    className="text-amber-400"
-                    strokeDasharray={`${atsScore}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
+                  {atsScore > 0 && (
+                    <path
+                      className="text-amber-400"
+                      strokeDasharray={`${atsScore}, 100`}
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  )}
                 </svg>
                 <div className="absolute text-center">
                   <span className="text-lg font-bold text-white leading-none">
-                    {atsScore}%
+                    {atsScore > 0 ? `${atsScore}%` : '--'}
                   </span>
-                  <div className="text-[9px] text-slate-400 uppercase font-semibold">Score</div>
+                  <div className="text-[9px] text-slate-400 uppercase font-semibold">
+                    {atsScore > 0 ? 'Score' : 'Pending'}
+                  </div>
                 </div>
               </div>
 
               <div>
                 <div className="text-xs font-bold text-white">ATS Readiness</div>
-                <div className="text-[11px] text-emerald-400 font-medium mt-0.5">
-                  Above Campus Benchmark
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 max-w-[130px]">
-                  Calibrated for AI/ML &amp; Automation roles
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  {atsScore > 0 ? 'Institutional Fit Baseline' : 'Requires Profile Setup'}
                 </div>
                 <Link
-                  to="/student/ats"
-                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-400 hover:text-brand-300"
+                  to={atsScore > 0 ? "/student/ats" : "/student/profile?first_time=true"}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-400 hover:text-brand-300 mt-2"
                 >
-                  View full breakdown <ChevronRight className="w-3 h-3" />
+                  {atsScore > 0 ? 'View full breakdown' : 'Setup profile now'} <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>

@@ -24,33 +24,59 @@ export const CoverLetterBuilderPage: React.FC = () => {
   const selectedJob = SEED_JOBS.find((j) => j.id === jobId) || SEED_JOBS[0];
   const company = SEED_COMPANIES.find((c) => c.id === selectedJob.company_id);
 
+  const isOwner =
+    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar' ||
+    profile?.full_name?.toLowerCase().includes('himanshu');
+
+  // Load saved student projects or experiences if available
+  const savedData = React.useMemo(() => {
+    try {
+      const saved = localStorage.getItem(`dmiher_student_profile_${profile?.id || 'default'}`);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn(e);
+    }
+    return null;
+  }, [profile?.id]);
+
+  const applicantProjects = savedData?.projects?.length > 0
+    ? savedData.projects.slice(0, 3).map((p: any) => `• ${p.title}: ${p.description || 'Hands-on practical development'}`).join('\n')
+    : (isOwner
+      ? `• Engineered an automated YOLO-based answer sheet block extraction and OCR pipeline using Python, OpenCV, and Streamlit.\n• Architected an autonomous agentic content automation workflow coordinating n8n orchestration, ComfyUI generative models, and Docker containerization.\n• Developed an Explainable AI Intrusion Detection System utilizing scikit-learn and SHAP interpretability metrics.`
+      : `• Developed domain applications applying modern software frameworks and clean architecture principles.\n• Executed academic project modules emphasizing algorithm efficiency and code maintainability.\n• Collaborated on technical deliverables aligned with institutional standards.`);
+
+  const experienceHighlight = savedData?.experiences?.length > 0
+    ? `During my role as ${savedData.experiences[0].role_title} at ${savedData.experiences[0].organization}, I delivered practical technical results. In parallel, my recent technical projects directly intersect with your core technology requirements:`
+    : (isOwner
+      ? `During my Cyber Security Internship at Cluster Computing Pvt. Ltd., I conducted scam-pattern investigations, threat signature analysis, and digital-evidence synthesis. In parallel, my recent technical projects directly intersect with your core technology requirements:`
+      : `Throughout my academic curriculum and coursework, I have concentrated on practical engineering problem-solving. My core projects directly intersect with your technology requirements:`);
+
   // Auto-generate template text matching applicant credentials
   const defaultLetterBody = `Dear Hiring Team at ${company?.name || 'the Organization'},
 
-I am writing to express my strong interest in the ${selectedJob.title} position (${selectedJob.work_mode}, ${selectedJob.location}) as part of the DMIHER campus placement program. As a pre-final year Computer Science & Engineering undergraduate at Datta Meghe Institute of Higher Education and Research (DMIHER) with demonstrated hands-on engineering experience in machine learning pipelines, agentic automation, and defensive security systems, I am eager to contribute effectively to your engineering initiatives.
+I am writing to express my strong interest in the ${selectedJob.title} position (${selectedJob.work_mode}, ${selectedJob.location}) as part of the DMIHER campus placement program. As a pre-final year Computer Science & Engineering undergraduate at Datta Meghe Institute of Higher Education and Research (DMIHER) with demonstrated technical foundations in software engineering and modern problem-solving, I am eager to contribute effectively to your engineering initiatives.
 
-During my Cyber Security Internship at Cluster Computing Pvt. Ltd., I conducted scam-pattern investigations, threat signature analysis, and digital-evidence synthesis. In parallel, my recent technical projects directly intersect with your core technology requirements:
-• Engineered an automated YOLO-based answer sheet block extraction and OCR pipeline using Python, OpenCV, and Streamlit.
-• Architected an autonomous agentic content automation workflow coordinating n8n orchestration, ComfyUI generative models, and Docker containerization.
-• Developed an Explainable AI Intrusion Detection System utilizing scikit-learn and SHAP interpretability metrics.
+${experienceHighlight}
+${applicantProjects}
 
-With proven proficiency in ${selectedJob.required_skills?.slice(0, 4).join(', ') || 'modern software engineering'}, strong analytical fundamentals (CGPA: ${profile?.cgpa || '6.29'}), and a disciplined work ethic, I am confident in my capability to deliver immediate value to ${company?.name}.
+With proven proficiency in ${selectedJob.required_skills?.slice(0, 4).join(', ') || 'modern software engineering'}, strong analytical fundamentals${profile?.cgpa ? ` (CGPA: ${profile.cgpa})` : (isOwner ? ' (CGPA: 6.29)' : '')}, and a disciplined work ethic, I am confident in my capability to deliver immediate value to ${company?.name}.
 
 Thank you for your time, consideration, and review of my application. I welcome the opportunity to discuss my qualifications and how my technical background aligns with your team's objectives.
 
 Sincerely,
-${profile?.full_name || 'Himanshu Vikas Chamatkar'}
+${profile?.full_name || (isOwner ? 'Himanshu Vikas Chamatkar' : 'Student Applicant')}
 Department of Computer Science & Engineering
 Datta Meghe Institute of Higher Education and Research (DMIHER), Wardha
-Email: ${profile?.email || '123himanshuchamatkar@gmail.com'}
-Phone: ${profile?.phone || '+91 98765 43210'}`;
+Email: ${profile?.email || (isOwner ? '123himanshuchamatkar@gmail.com' : '')}
+${profile?.phone || (isOwner ? 'Phone: +91 98765 43210' : '')}`;
 
   const [letterContent, setLetterContent] = useState(defaultLetterBody);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   useEffect(() => {
     setLetterContent(defaultLetterBody);
-  }, [selectedJob.id]);
+  }, [selectedJob.id, profile?.id, isOwner]);
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF({

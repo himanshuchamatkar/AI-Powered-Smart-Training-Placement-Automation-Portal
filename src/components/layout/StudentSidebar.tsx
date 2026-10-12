@@ -48,17 +48,25 @@ export const StudentSidebar: React.FC = () => {
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             ATS Readiness
           </span>
-          <span className="text-amber-400 font-bold">{atsScore}%</span>
+          <span className={atsScore > 0 ? "text-amber-400 font-bold" : "text-slate-400 font-semibold"}>
+            {atsScore > 0 ? `${atsScore}%` : 'Pending'}
+          </span>
         </div>
         <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
           <div
             className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500"
-            style={{ width: `${atsScore}%` }}
+            style={{ width: `${atsScore > 0 ? atsScore : 5}%` }}
           />
         </div>
-        <div className="mt-2 text-[11px] text-slate-400 flex justify-between">
-          <span>Target: {profile?.preferred_role?.split(' ')[0] || 'AI/ML'}</span>
-          <span className="text-emerald-400 font-medium">Eligible</span>
+        <div className="mt-2 text-[11px] text-slate-400 flex justify-between items-center">
+          <span>{atsScore > 0 ? `Target: ${profile?.preferred_role?.split(' ')[0] || 'AI/ML'}` : 'Profile incomplete'}</span>
+          {atsScore > 0 ? (
+            <span className="text-emerald-400 font-medium">Eligible</span>
+          ) : (
+            <NavLink to="/student/profile?first_time=true" className="text-amber-400 hover:underline font-bold">
+              Setup &rarr;
+            </NavLink>
+          )}
         </div>
       </div>
 

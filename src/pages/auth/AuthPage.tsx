@@ -64,7 +64,7 @@ export const AuthPage: React.FC = () => {
     setLoading(true);
     setMessage(null);
 
-    const { error } = await verifyOtp(email, otpCode);
+    const { error, isNewUser } = await verifyOtp(email, otpCode);
     setLoading(false);
 
     if (error) {
@@ -72,6 +72,8 @@ export const AuthPage: React.FC = () => {
     } else {
       if (email.toLowerCase().includes('feat2230') || email.toLowerCase().includes('admin')) {
         navigate('/admin/overview');
+      } else if (mode === 'register' || isNewUser) {
+        navigate('/student/profile?onboarding=true');
       } else {
         navigate('/student/dashboard');
       }

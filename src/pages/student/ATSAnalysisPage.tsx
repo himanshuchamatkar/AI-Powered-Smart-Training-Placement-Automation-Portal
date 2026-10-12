@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -19,10 +20,38 @@ export const ATSAnalysisPage: React.FC = () => {
   const { profile } = useAuth();
   const [targetRole, setTargetRole] = useState('AI/ML Engineer');
 
-  const userSkillNames = OWNER_SKILLS.map((s) => s.name);
+  const isOwner =
+    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar' ||
+    profile?.full_name?.toLowerCase().includes('himanshu');
+
+  // Load user's actual saved skills
+  const userSkillNames = useMemo(() => {
+    if (isOwner) return OWNER_SKILLS.map((s) => s.name);
+    try {
+      const saved = localStorage.getItem(`dmiher_student_profile_${profile?.id || 'new'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed.skills) && parsed.skills.length > 0) {
+          return parsed.skills.map((s: any) => s.name || s);
+        }
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+    return [];
+  }, [profile?.id, isOwner]);
+
+  const isProfileIncomplete = !isOwner && (!profile?.profile_completion || profile.profile_completion < 50);
   const analysis = calculateATSAnalysis(profile || ({} as any), userSkillNames, targetRole);
 
   const availableRoles = Object.keys(ROLE_KEYWORD_BENCHMARKS);
+
+  // Pillar scores
+  const techSkillScore = isOwner ? 88 : (analysis.score > 0 ? Math.min(92, Math.max(45, analysis.score + 5)) : 0);
+  const terminologyScore = isOwner ? 76 : (analysis.score > 0 ? Math.min(90, Math.max(40, analysis.score - 4)) : 0);
+  const projectScore = isOwner ? 82 : (analysis.score > 0 ? Math.min(95, Math.max(50, analysis.score + 2)) : 0);
+  const formatScore = isOwner ? 95 : (analysis.score > 0 ? 90 : 0);
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen pb-16">
@@ -36,6 +65,27 @@ export const ATSAnalysisPage: React.FC = () => {
       />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+        {/* Incomplete Profile Setup Banner */}
+        {isProfileIncomplete && (
+          <div className="p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-start gap-3.5">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-bold text-amber-950">Action Required: Profile Setup Incomplete</h4>
+                <p className="text-xs text-amber-800 mt-0.5 max-w-2xl leading-relaxed">
+                  As a new student registering for the first time, please configure your academic credentials, technical skills, and capstone projects in the Profile Builder to calculate your personalized ATS Readiness Score and target role benchmarks.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/student/profile?first_time=true"
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 inline-flex items-center gap-1.5 transition-colors"
+            >
+              Complete Profile Setup &rarr;
+            </Link>
+          </div>
+        )}
+
         {/* Top Score Banner */}
         <div className="bg-gradient-to-r from-slate-900 to-navy-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -68,13 +118,23 @@ export const ATSAnalysisPage: React.FC = () => {
 
             {/* Score Big Display */}
             <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 flex flex-col items-center justify-center text-center shrink-0 min-w-[180px]">
-              <div className="text-4xl sm:text-5xl font-extrabold text-amber-400 leading-none">
-                {analysis.score}%
+              <div className={`text-4xl sm:text-5xl font-extrabold leading-none ${analysis.score > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
+                {analysis.score > 0 ? `${analysis.score}%` : '--'}
               </div>
-              <div className="text-xs font-bold text-slate-200 mt-2">Overall Match Score</div>
-              <div className="text-[11px] text-emerald-400 font-medium mt-0.5">High Placement Fit</div>
+              <div className="text-xs font-bold text-slate-200 mt-2">
+                {analysis.score > 0 ? 'Overall Match Score' : 'Score Pending'}
+              </div>
+              <div className={`text-[11px] font-medium mt-0.5 ${analysis.score > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {analysis.score > 0 ? 'High Placement Fit' : 'Requires Profile Setup'}
+              </div>
               <div className="text-[10px] text-slate-400 mt-1">
-                {profile?.email?.includes('123himanshu') ? 'Fixed Presentation Baseline' : 'Calculated Profile Score'}
+                {analysis.score > 0
+                  ? (isOwner ? 'Fixed Presentation Baseline' : 'Calculated Profile Score')
+                  : (
+                    <Link to="/student/profile?first_time=true" className="text-amber-300 hover:underline">
+                      Setup Profile Now &rarr;
+                    </Link>
+                  )}
               </div>
             </div>
           </div>
@@ -84,38 +144,46 @@ export const ATSAnalysisPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="text-xs font-semibold text-slate-500 mb-1">Core Tech Skills</div>
-            <div className="text-2xl font-bold text-slate-900">88%</div>
+            <div className="text-2xl font-bold text-slate-900">{techSkillScore > 0 ? `${techSkillScore}%` : '--'}</div>
             <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '88%' }}></div>
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${techSkillScore}%` }}></div>
             </div>
-            <div className="text-[11px] text-emerald-600 font-medium mt-2">High keyword alignment</div>
+            <div className="text-[11px] text-emerald-600 font-medium mt-2">
+              {techSkillScore > 0 ? 'Skill keyword alignment' : 'Awaiting profile setup'}
+            </div>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="text-xs font-semibold text-slate-500 mb-1">Role Terminology</div>
-            <div className="text-2xl font-bold text-slate-900">76%</div>
+            <div className="text-2xl font-bold text-slate-900">{terminologyScore > 0 ? `${terminologyScore}%` : '--'}</div>
             <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-amber-500 h-full rounded-full" style={{ width: '76%' }}></div>
+              <div className="bg-amber-500 h-full rounded-full" style={{ width: `${terminologyScore}%` }}></div>
             </div>
-            <div className="text-[11px] text-amber-600 font-medium mt-2">Recommended keywords present</div>
+            <div className="text-[11px] text-amber-600 font-medium mt-2">
+              {terminologyScore > 0 ? 'Role terminology match' : 'Awaiting profile setup'}
+            </div>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="text-xs font-semibold text-slate-500 mb-1">Project Evidence</div>
-            <div className="text-2xl font-bold text-slate-900">82%</div>
+            <div className="text-2xl font-bold text-slate-900">{projectScore > 0 ? `${projectScore}%` : '--'}</div>
             <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '82%' }}></div>
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${projectScore}%` }}></div>
             </div>
-            <div className="text-[11px] text-emerald-600 font-medium mt-2">Strong practical capstone</div>
+            <div className="text-[11px] text-emerald-600 font-medium mt-2">
+              {projectScore > 0 ? 'Practical capstone metrics' : 'Awaiting profile setup'}
+            </div>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="text-xs font-semibold text-slate-500 mb-1">ATS Formatting</div>
-            <div className="text-2xl font-bold text-slate-900">95%</div>
+            <div className="text-2xl font-bold text-slate-900">{formatScore > 0 ? `${formatScore}%` : '--'}</div>
             <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '95%' }}></div>
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${formatScore}%` }}></div>
             </div>
-            <div className="text-[11px] text-emerald-600 font-medium mt-2">Clean single-column layout</div>
+            <div className="text-[11px] text-emerald-600 font-medium mt-2">
+              {formatScore > 0 ? 'Standard single-column layout' : 'Awaiting resume upload'}
+            </div>
           </div>
         </div>
 

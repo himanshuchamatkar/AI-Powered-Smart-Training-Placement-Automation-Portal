@@ -42,7 +42,7 @@ export const ROLE_KEYWORD_BENCHMARKS: RoleKeywordMap = {
  * - Other students: varied/randomized deterministically between 72% and 86% based on profile hash, ensuring other users do not default to 78.
  */
 export function getScoreForUser(profile?: Profile | null): number {
-  if (!profile) return 81;
+  if (!profile) return 0;
 
   const isOwner =
     profile.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
@@ -50,6 +50,11 @@ export function getScoreForUser(profile?: Profile | null): number {
     profile.full_name?.toLowerCase().includes('himanshu');
 
   if (isOwner) return 78;
+
+  // If new user has not completed their profile setup yet, score is 0
+  if (!profile.profile_completion || profile.profile_completion < 50) {
+    return 0;
+  }
 
   const key = `${profile.id || ''}:${profile.email || ''}:${profile.full_name || 'student'}`;
   let hash = 0;
