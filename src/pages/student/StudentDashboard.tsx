@@ -18,12 +18,14 @@ import {
   AlertCircle,
   Clock,
   RotateCcw,
+  Globe,
 } from 'lucide-react';
 import { SEED_JOBS, SEED_COMPANIES, SEED_APPLICATIONS, SEED_RECRUITMENT_DRIVES, SEED_ANNOUNCEMENTS } from '@/data/mockSeed';
 import { OWNER_SKILLS } from '@/data/ownerProfile';
 import { rankJobsForStudent } from '@/lib/scoring/matching';
 import { getScoreForUser } from '@/lib/scoring/ats';
 import { Application, ApplicationStatus } from '@/types/database';
+import { JobClawDashboard } from '@/components/globe/JobClawDashboard';
 
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
@@ -241,10 +243,10 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Action Shortcuts & Pipeline Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Link
             to="/student/profile"
-            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group"
+            className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group"
           >
             <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <FileText className="w-5 h-5" />
@@ -255,7 +257,7 @@ export const StudentDashboard: React.FC = () => {
 
           <Link
             to="/student/ats"
-            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group"
+            className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group"
           >
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <FileCheck2 className="w-5 h-5" />
@@ -265,8 +267,22 @@ export const StudentDashboard: React.FC = () => {
           </Link>
 
           <Link
+            to="/student/globe"
+            className="bg-gradient-to-br from-slate-900 to-cyan-950 p-4 sm:p-5 rounded-2xl border border-cyan-800/60 shadow-xs hover:border-cyan-400 hover:shadow-md transition-all group text-white"
+          >
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+              <Globe className="w-5 h-5 animate-spin-slow" />
+            </div>
+            <div className="text-sm font-bold text-white flex items-center gap-1.5">
+              <span>3D Job Radar</span>
+              <span className="px-1.5 py-0.2 bg-cyan-500/30 text-cyan-300 text-[9px] rounded font-bold">New</span>
+            </div>
+            <div className="text-xs text-cyan-200/70 mt-0.5">Explore jobs on interactive 3D globe</div>
+          </Link>
+
+          <Link
             to="/student/jobs"
-            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group"
+            className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group"
           >
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <Briefcase className="w-5 h-5" />
@@ -277,14 +293,45 @@ export const StudentDashboard: React.FC = () => {
 
           <Link
             to="/student/applications"
-            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group"
+            className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-500 hover:shadow-md transition-all group col-span-2 md:col-span-1"
           >
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
               <ListTodo className="w-5 h-5" />
             </div>
             <div className="text-sm font-bold text-slate-900">Application Tracker</div>
-            <div className="text-xs text-slate-500 mt-0.5">{applications.length} active portal submissions</div>
+            <div className="text-xs text-slate-500 mt-0.5">{applications.length} active submissions</div>
           </Link>
+        </div>
+
+        {/* JobClaw 3D Global Job Radar Section */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-cyan-50 text-cyan-600">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Global Job Radar (JobClaw 3D Explorer)
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                  Interactive 3D WebGL
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Rotate the globe, search by technical keywords or company, and explore verified drives across India and international tech hubs
+              </p>
+            </div>
+            <Link
+              to="/student/globe"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors shrink-0 shadow-xs"
+            >
+              <span>Full-Screen Radar</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <JobClawDashboard embedded={true} />
         </div>
 
         {/* Dashboard Status Update Feedback Toast */}

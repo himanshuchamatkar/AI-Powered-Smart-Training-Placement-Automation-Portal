@@ -16,6 +16,7 @@ import { JobRecommendationsPage } from '@/pages/student/JobRecommendationsPage';
 import { CoverLetterBuilderPage } from '@/pages/student/CoverLetterBuilderPage';
 import { ApplicationTrackerPage } from '@/pages/student/ApplicationTrackerPage';
 import { StudentAnnouncementsPage } from '@/pages/student/StudentAnnouncementsPage';
+import { JobClawGlobePage } from '@/pages/student/JobClawGlobePage';
 
 // Admin Pages
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
@@ -45,6 +46,7 @@ export const App: React.FC = () => {
             <Route path="jobs" element={<JobRecommendationsPage />} />
             <Route path="cover-letter" element={<CoverLetterBuilderPage />} />
             <Route path="applications" element={<ApplicationTrackerPage />} />
+            <Route path="globe" element={<JobClawGlobePage />} />
             <Route path="announcements" element={<StudentAnnouncementsPage />} />
           </Route>
 

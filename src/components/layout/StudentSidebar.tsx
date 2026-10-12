@@ -10,6 +10,7 @@ import {
   Megaphone,
   GraduationCap,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getScoreForUser } from '@/lib/scoring/ats';
@@ -22,6 +23,7 @@ export const StudentSidebar: React.FC = () => {
     { to: '/student/dashboard', icon: LayoutDashboard, label: 'Overview Dashboard' },
     { to: '/student/profile', icon: UserSquare2, label: 'Profile Builder' },
     { to: '/student/ats', icon: FileCheck2, label: 'ATS Resume Analysis' },
+    { to: '/student/globe', icon: Globe, label: '3D Job Radar (JobClaw)' },
     { to: '/student/jobs', icon: Briefcase, label: 'Job Recommendations' },
     { to: '/student/cover-letter', icon: FileText, label: 'Cover Letter Builder' },
     { to: '/student/applications', icon: ListTodo, label: 'Application Tracker' },
