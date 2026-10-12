@@ -25,9 +25,8 @@ export const CoverLetterBuilderPage: React.FC = () => {
   const company = SEED_COMPANIES.find((c) => c.id === selectedJob.company_id);
 
   const isOwner =
-    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
-    profile?.id === 'owner-himanshu-chamatkar' ||
-    profile?.full_name?.toLowerCase().includes('himanshu');
+    profile?.email?.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar';
 
   // Load saved student projects or experiences if available
   const savedData = React.useMemo(() => {

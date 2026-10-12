@@ -660,7 +660,7 @@ export const SEED_SYNTHETIC_STUDENTS: Profile[] = [
     preferred_role: 'Computer Vision Engineer',
     experience_level: 'intermediate',
     profile_completion: 88,
-    ats_score: 78,
+    ats_score: 84,
     created_at: '2026-08-28T15:30:00Z',
   },
   {

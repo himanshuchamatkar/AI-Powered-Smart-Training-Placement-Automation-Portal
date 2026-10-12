@@ -38,9 +38,8 @@ export const ProfileBuilder: React.FC = () => {
   const isFirstTimeParam = searchParams.get('first_time') === 'true' || searchParams.get('onboarding') === 'true';
 
   const isOwner =
-    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
-    profile?.id === 'owner-himanshu-chamatkar' ||
-    profile?.full_name?.toLowerCase().includes('himanshu');
+    profile?.email?.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar';
 
   const storageKey = `dmiher_student_profile_${profile?.id || 'new'}`;
 

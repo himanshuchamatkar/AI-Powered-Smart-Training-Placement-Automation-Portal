@@ -45,9 +45,8 @@ export function getScoreForUser(profile?: Profile | null): number {
   if (!profile) return 0;
 
   const isOwner =
-    profile.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
-    profile.id === 'owner-himanshu-chamatkar' ||
-    profile.full_name?.toLowerCase().includes('himanshu');
+    profile.email?.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile.id === 'owner-himanshu-chamatkar';
 
   if (isOwner) return 78;
 
@@ -56,7 +55,7 @@ export function getScoreForUser(profile?: Profile | null): number {
     return 0;
   }
 
-  const key = `${profile.id || ''}:${profile.email || ''}:${profile.full_name || 'student'}`;
+  const key = `${profile.id || ''}:${profile.email?.trim().toLowerCase() || ''}:${profile.full_name || 'student'}`;
   let hash = 0;
   for (let i = 0; i < key.length; i++) {
     hash = (hash << 5) - hash + key.charCodeAt(i);
@@ -78,9 +77,8 @@ export function calculateATSAnalysis(
   targetRole: string = 'AI/ML Engineer'
 ): ATSAnalysis {
   const isOwner =
-    profile.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
-    profile.id === 'owner-himanshu-chamatkar' ||
-    profile.full_name?.toLowerCase().includes('himanshu');
+    profile.email?.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile.id === 'owner-himanshu-chamatkar';
 
   const benchmark =
     ROLE_KEYWORD_BENCHMARKS[targetRole] || ROLE_KEYWORD_BENCHMARKS['AI/ML Engineer'];

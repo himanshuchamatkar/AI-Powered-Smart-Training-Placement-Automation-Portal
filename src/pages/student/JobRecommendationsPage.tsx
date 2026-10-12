@@ -28,9 +28,8 @@ export const JobRecommendationsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const isOwner =
-    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
-    profile?.id === 'owner-himanshu-chamatkar' ||
-    profile?.full_name?.toLowerCase().includes('himanshu');
+    profile?.email?.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar';
 
   const userSkillNames = useMemo(() => {
     if (isOwner) return OWNER_SKILLS.map((s) => s.name);

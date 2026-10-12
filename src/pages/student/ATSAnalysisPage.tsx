@@ -21,9 +21,8 @@ export const ATSAnalysisPage: React.FC = () => {
   const [targetRole, setTargetRole] = useState('AI/ML Engineer');
 
   const isOwner =
-    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
-    profile?.id === 'owner-himanshu-chamatkar' ||
-    profile?.full_name?.toLowerCase().includes('himanshu');
+    profile?.email?.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar';
 
   // Load user's actual saved skills
   const userSkillNames = useMemo(() => {

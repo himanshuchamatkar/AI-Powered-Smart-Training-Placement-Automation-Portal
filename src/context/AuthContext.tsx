@@ -85,9 +85,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser({ id: 'admin-feat2230', email: 'feat2230@gmail.com' });
         setProfile(adminProfile);
-      } else {
+      } else if (savedPersona === 'owner') {
         setUser({ id: OWNER_PROFILE.id, email: OWNER_PROFILE.email });
         setProfile(OWNER_PROFILE);
+      } else if (savedPersona && savedPersona.startsWith('student_')) {
+        const studentId = savedPersona.replace('student_', '');
+        const savedData = localStorage.getItem(`dmiher_student_profile_${studentId}`);
+        let pName = 'Student';
+        let pEmail = '';
+        let pComp = 0;
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            pName = parsed.formData?.full_name || 'Student';
+            pEmail = parsed.formData?.email || '';
+            pComp = parsed.profile_completion ?? 0;
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+        const stProfile: Profile = {
+          id: studentId,
+          full_name: pName,
+          email: pEmail,
+          role: 'student',
+          profile_completion: pComp,
+          ats_score: getScoreForUser({ id: studentId, full_name: pName, email: pEmail, role: 'student', profile_completion: pComp }),
+        };
+        setUser({ id: studentId, email: pEmail });
+        setProfile(stProfile);
+      } else {
+        setUser(null);
+        setProfile(null);
       }
 
       if (mounted) setLoading(false);
@@ -105,7 +134,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .select('*')
               .eq('id', session.user.id)
               .single();
-            if (userProfile) setProfile(userProfile);
+            if (userProfile) {
+              setProfile({
+                ...userProfile,
+                ats_score: getScoreForUser(userProfile),
+              });
+            }
           }
         })
       : { data: { subscription: { unsubscribe: () => {} } } };
@@ -192,10 +226,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Dev verification
     if (email.toLowerCase().includes('feat2230') || email.toLowerCase().includes('admin')) {
       switchDemoUser('admin');
-    } else {
+      return { error: null, isNewUser: false };
+    } else if (email.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' || email.trim().toLowerCase() === 'owner@dmiher.edu.in') {
       switchDemoUser('owner');
+      return { error: null, isNewUser: false };
+    } else {
+      const studentId = 'student-' + Math.random().toString(36).substring(2, 9);
+      const newStudentProfile: Profile = {
+        id: studentId,
+        full_name: email.split('@')[0],
+        email: email,
+        role: 'student',
+        profile_completion: 0,
+        ats_score: 0,
+      };
+      setUser({ id: studentId, email });
+      setProfile(newStudentProfile);
+      localStorage.setItem('dmiher_demo_persona', `student_${studentId}`);
+      return { error: null, isNewUser: true };
     }
-    return { error: null };
   };
 
   const signOut = async () => {

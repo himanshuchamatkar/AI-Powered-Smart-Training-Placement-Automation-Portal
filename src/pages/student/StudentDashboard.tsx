@@ -28,9 +28,8 @@ import { Application, ApplicationStatus } from '@/types/database';
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
   const isOwner =
-    profile?.email?.toLowerCase() === '123himanshuchamatkar@gmail.com' ||
-    profile?.id === 'owner-himanshu-chamatkar' ||
-    profile?.full_name?.toLowerCase().includes('himanshu');
+    profile?.email?.trim().toLowerCase() === '123himanshuchamatkar@gmail.com' ||
+    profile?.id === 'owner-himanshu-chamatkar';
   const atsScore = getScoreForUser(profile || ({} as any));
   const userSkillNames = React.useMemo(() => {
     if (isOwner) return OWNER_SKILLS.map((s) => s.name);
